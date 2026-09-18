@@ -1,0 +1,11 @@
+services:
+  volcengine-proxy:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8787:8787"
+    environment:
+      KEY_COOLDOWN_SECONDS: "300"
+      HEALTHCHECK_MODEL: "doubao-seed-2.0-lite"
+    volumes:
+      - ./data:/app/data

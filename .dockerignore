@@ -1,0 +1,12 @@
+.git
+.gitignore
+AGENTS.md
+README.md
+DEPLOYMENT.md
+.env
+data/*.json
+node_modules
+npm-debug.log*
+*.tar
+*.tar.gz
+

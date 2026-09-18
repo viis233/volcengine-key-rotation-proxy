@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Volcengine Key Pool</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <p class="eyebrow">INTRANET API PROXY</p>
+        <h1>Volcengine Key Pool</h1>
+        <p class="subtitle">集中管理 Coding Plan Key，达到限额时自动轮换。</p>
+      </div>
+      <div id="health" class="health"><span></span>连接中</div>
+    </header>
+
+    <section class="stats">
+      <div class="stat"><strong id="totalCount">0</strong><span>全部 Key</span></div>
+      <div class="stat"><strong id="validCount">0</strong><span>有效 Key</span></div>
+      <div class="stat"><strong id="quotaCount">0</strong><span>有额度 Key</span></div>
+    </section>
+
+    <section class="card key-card">
+      <div class="section-title">
+        <div><h2>Key 列表</h2><p>打开页面时检测一次，也可手动重检；系统不会在后台定时消耗额度。</p></div>
+        <div class="title-actions"><button id="checkNow" class="secondary">检查所有 Key</button><button id="showAdd">＋ 添加 Key</button></div>
+      </div>
+      <div id="empty" class="empty" hidden>还没有 Key，添加一个即可开始代理请求。</div>
+      <div id="keyList" class="key-list"></div>
+    </section>
+
+    <section class="card endpoint-card">
+      <div>
+        <p class="label">OpenCode Base URL</p>
+        <code id="endpoint">正在读取…</code>
+      </div>
+      <button id="copy" class="secondary">复制地址</button>
+    </section>
+
+    <section class="card config-card">
+      <div class="section-title">
+        <div>
+          <p class="label">OPENCODE.JSON</p>
+          <h2>可直接使用的 OpenCode 配置</h2>
+          <p>默认使用 <code>ark-code-latest</code>，代理地址会根据当前页面自动生成。</p>
+        </div>
+        <div class="config-actions">
+          <label class="model-select">默认模型
+            <select id="configModel"></select>
+          </label>
+          <button id="copyConfig">复制完整配置</button>
+        </div>
+      </div>
+      <pre id="openCodeConfig">正在生成…</pre>
+      <p class="config-hint">配置包含官方文档当前列出的全部模型。新配置可保存为 <code>~/.config/opencode/opencode.json</code>；已有配置时请合并其中的 <code>provider</code> 内容。</p>
+    </section>
+  </main>
+
+  <dialog id="addDialog">
+    <form id="addForm">
+      <div class="dialog-head"><h2>添加 API Key</h2><button type="button" id="closeDialog" class="icon">×</button></div>
+      <label>备注名称<input name="name" placeholder="例如：团队配额 A"></label>
+      <label>API Key<input name="value" type="password" required autocomplete="off" placeholder="输入火山方舟 API Key"></label>
+      <p id="formError" class="error"></p>
+      <div class="actions"><button type="button" id="cancel" class="secondary">取消</button><button type="submit">保存</button></div>
+    </form>
+  </dialog>
+  <div id="toast" class="toast"></div>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

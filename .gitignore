@@ -1,0 +1,9 @@
+node_modules/
+data/*.json
+!.gitkeep
+.env
+npm-debug.log*
+.DS_Store
+volcengine-key-rotation-proxy-1.0.0/
+volcengine-key-rotation-proxy-1.0.0-*.tar.gz
+volcengine-key-rotation-proxy-1.0.0.zip
