@@ -4,6 +4,7 @@ data/*.json
 .env
 npm-debug.log*
 .DS_Store
+.idea/
 volcengine-key-rotation-proxy-1.0.0/
 volcengine-key-rotation-proxy-1.0.0-*.tar.gz
 volcengine-key-rotation-proxy-1.0.0.zip
