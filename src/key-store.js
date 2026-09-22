@@ -6,7 +6,7 @@ export class KeyStore {
   constructor(file, cooldownMs) {
     this.file = file
     this.cooldownMs = cooldownMs
-    this.state = { keys: [], cursor: 0 }
+    this.state = { keys: [], stickyId: null }
     this.queue = Promise.resolve()
   }
 
@@ -116,9 +116,11 @@ export class KeyStore {
     const now = Date.now()
     const available = this.state.keys.filter((key) => key.enabled && key.cooldownUntil <= now && key.authStatus !== 'invalid' && key.quotaStatus !== 'subscription_invalid')
     if (!available.length) return []
-    const start = this.state.cursor % available.length
-    this.state.cursor = (start + 1) % available.length
-    return [...available.slice(start), ...available.slice(0, start)]
+    const rank = (key) => {
+      if (key.id === this.state.stickyId) return 0
+      return key.name.includes('%我的%') ? 2 : 1
+    }
+    return [...available].sort((a, b) => rank(a) - rank(b))
   }
 
   enabledKeys() {
@@ -172,6 +174,7 @@ export class KeyStore {
       key.authStatus = 'valid'
       key.quotaStatus = 'available'
       key.cooldownUntil = 0
+      this.state.stickyId = id
       await this.save()
     })
   }
@@ -180,6 +183,7 @@ export class KeyStore {
     return this.locked(async () => {
       const key = this.state.keys.find((item) => item.id === id)
       if (!key) return
+      if (this.state.stickyId === id) this.state.stickyId = null
       key.requests += 1
       key.failures += 1
       key.lastError = String(reason).slice(0, 300)

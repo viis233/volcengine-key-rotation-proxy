@@ -16,7 +16,7 @@ async function createStore(t, keys) {
 test('轮询 Key 且不公开密钥', async (t) => {
   const store = await createStore(t, ['abcdefgh12345678', 'ijklmnop87654321'])
   assert.deepEqual(store.candidates().map((key) => key.value), ['abcdefgh12345678', 'ijklmnop87654321'])
-  assert.deepEqual(store.candidates().map((key) => key.value), ['ijklmnop87654321', 'abcdefgh12345678'])
+  assert.deepEqual(store.candidates().map((key) => key.value), ['abcdefgh12345678', 'ijklmnop87654321'])
   assert.equal(store.publicKeys()[0].masked, 'abcd••••5678')
   assert.equal('value' in store.publicKeys()[0], false)
 })
@@ -63,4 +63,19 @@ test('代理结果更新请求统计和冷却状态', async (t) => {
   assert.equal(state.available, true)
   assert.equal(state.requests, 2)
   assert.equal(state.cooldownUntil, 0)
+})
+
+test('优先非 %我的% 名称的 Key 且成功后粘滞', async (t) => {
+  const store = await createStore(t, [])
+  const mine = await store.add('key-mine', '账号 %我的%')
+  const clean = await store.add('key-clean', '共享账号')
+  const [cleanKey, mineKey] = store.publicKeys()
+
+  assert.deepEqual(store.candidates().map((key) => key.id), [clean, mine])
+
+  await store.recordSuccess(mine)
+  assert.deepEqual(store.candidates().map((key) => key.id), [mine, clean])
+
+  await store.recordFailure(mine, { reason: 'quota', quotaStatus: 'exhausted', cooldown: true })
+  assert.deepEqual(store.candidates().map((key) => key.id), [clean])
 })
