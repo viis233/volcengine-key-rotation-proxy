@@ -37,7 +37,8 @@ Coding Plan 的协议、额度、工具和模型以官方文档及当前账号�
 - 正常响应和 SSE 流直接透传；响应开始后不得换 Key 重试。
 - `401/402/403/429`、`AccountQuotaExceeded` 和 `InvalidSubscription` 会更新状态并切换 Key。
 - `AccountQuotaExceeded` 优先使用上游返回的重置时间，否则采用配置的临时冷却时间。
-- 管理页打开时执行一次最小 Seed 模型探针，也允许手动重检；服务端不得定时探测。
+- 管理页打开时执行一次最小 Seed 模型探针，也允许手动重检；服务端可定时扫描并验证 sticky 之外的恢复 Key（见下）。
+- 服务端按 `ROTATE_INTERVAL_SECONDS`（默认 30，0 禁用）定时扫描非 sticky、非 `%我的%` 名称且冷却已结束的 Key，对候选执行最小探针，通过后将 sticky 切到该 Key，避免长期粘滞同一 Key。轮换仅切换 sticky 优先顺序，不影响透传与失败自动切换语义。
 - 上游未提供精确剩余额度时不展示或推测该数据。
 
 ## 实现约定
@@ -65,6 +66,7 @@ npm test
 node --check src/server.js
 node --check src/proxy.js
 node --check src/monitor.js
+node --check src/rotator.js
 node --check public/app.js
 ```
 

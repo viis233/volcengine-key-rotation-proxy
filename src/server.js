@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { KeyStore } from './key-store.js'
 import { createProxyHandler } from './proxy.js'
 import { createKeyChecker } from './monitor.js'
+import { createStickyRotator } from './rotator.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const port = Number(process.env.PORT || 8787)
@@ -12,18 +13,24 @@ const host = process.env.HOST || '0.0.0.0'
 const upstreamBaseUrl = (process.env.UPSTREAM_BASE_URL || 'https://ark.cn-beijing.volces.com/api/coding/v3').replace(/\/$/, '')
 const cooldownMs = Number(process.env.KEY_COOLDOWN_SECONDS || 300) * 1000
 const probeModel = process.env.HEALTHCHECK_MODEL || 'doubao-seed-2.0-lite'
+const rotateIntervalMs = Number(process.env.ROTATE_INTERVAL_SECONDS || 30) * 1000
 
 const app = Fastify({ logger: true, bodyLimit: 20 * 1024 * 1024 })
 const store = new KeyStore(join(root, 'data', 'keys.json'), cooldownMs)
 await store.init((process.env.VOLCENGINE_API_KEYS || '').split(',').map((key) => key.trim()))
-const checkKeys = createKeyChecker({ store, upstreamBaseUrl, probeModel })
+const { check, checkAll } = createKeyChecker({ store, upstreamBaseUrl, probeModel })
+const rotator = createStickyRotator({ store, check })
+if (rotateIntervalMs > 0) {
+  rotator.start(rotateIntervalMs)
+  app.log.info(`sticky rotator started, interval=${rotateIntervalMs}ms`)
+}
 
 await app.register(fastifyStatic, { root: join(root, 'public'), prefix: '/' })
 
 app.get('/health', async () => ({ ok: true, keys: store.keyCounts() }))
 app.get('/admin/api/keys', async () => ({ keys: store.publicKeys() }))
 app.post('/admin/api/check', async (request, reply) => {
-  const started = await checkKeys()
+  const started = await checkAll()
   return started ? { ok: true, keys: store.publicKeys() } : reply.code(409).send({ error: '检测正在进行中' })
 })
 app.post('/admin/api/keys', async (request, reply) => {

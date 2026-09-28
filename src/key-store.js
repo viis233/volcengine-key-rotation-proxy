@@ -179,6 +179,19 @@ export class KeyStore {
     })
   }
 
+  async rotateSticky(id) {
+    return this.locked(async () => {
+      const key = this.state.keys.find((item) => item.id === id)
+      if (!key) return false
+      const now = Date.now()
+      const callable = key.enabled && key.cooldownUntil <= now && key.authStatus === 'valid' && key.quotaStatus === 'available'
+      if (!callable || this.state.stickyId === id) return false
+      this.state.stickyId = id
+      await this.save()
+      return true
+    })
+  }
+
   async recordFailure(id, { reason, errorCode = '', authStatus, quotaStatus, resetAt = 0, quotaPeriod = null, cooldown = false }) {
     return this.locked(async () => {
       const key = this.state.keys.find((item) => item.id === id)

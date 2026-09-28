@@ -49,8 +49,11 @@ docker compose up -d --build
 - `VOLCENGINE_API_KEYS`：逗号分隔的首次导入 Key
 - `KEY_COOLDOWN_SECONDS`：限额 Key 冷却秒数，默认 300
 - `HEALTHCHECK_MODEL`：管理页手动探针使用的 Seed 模型，默认 `doubao-seed-2.0-lite`
+- `ROTATE_INTERVAL_SECONDS`：sticky 轮换检测间隔（秒），默认 30，设为 `0` 可禁用
 
-管理页分别展示每个 Key 的鉴权状态和当前调用状态，并展示冷却/配额重置时间、额度周期、累计请求和失败次数。打开管理页时会自动检测一次，也可点击“检查所有 Key”重检。服务使用 `doubao-seed-2.0-lite` 执行极短输入、最多 16 token 输出的最小生成，从而验证 Key、模型权限和当前额度。服务端不会在后台定时探测。Coding Plan 兼容接口不提供精确剩余额度，页面不展示该字段。
+管理页分别展示每个 Key 的鉴权状态和当前调用状态，并展示冷却/配额重置时间、额度周期、累计请求和失败次数。打开管理页时会自动检测一次，也可点击“检查所有 Key”重检。服务使用 `doubao-seed-2.0-lite` 执行极短输入、最多 16 token 输出的最小生成，从而验证 Key、模型权限和当前额度。Coding Plan 兼容接口不提供精确剩余额度，页面不展示该字段。
+
+服务端会按 `ROTATE_INTERVAL_SECONDS` 定时扫描 sticky Key 之外的其他可用 Key（排除名称含 `%我的%` 的 Key），对候选执行最小探针，探针通过后将 sticky 切换到该 Key，避免始终粘滞在同一个 Key 上。
 
 OpenCode 请求会正常触发 Key 自动轮换。当所有 Key 均无额度、处于限流状态或不可使用时，代理返回 HTTP 429，并在错误正文中提供 `proxy_all_keys_quota_exhausted` 或 `proxy_all_keys_unavailable` 类型、各类 Key 数量及最早预计恢复时间。
 

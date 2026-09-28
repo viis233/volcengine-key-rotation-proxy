@@ -47,7 +47,7 @@ export function createKeyChecker({ store, upstreamBaseUrl, probeModel }) {
     }
   }
 
-  return async function checkAll() {
+  async function checkAll() {
     if (running) return false
     running = true
     try {
@@ -57,4 +57,6 @@ export function createKeyChecker({ store, upstreamBaseUrl, probeModel }) {
       running = false
     }
   }
+
+  return { check, checkAll }
 }
