@@ -63,6 +63,7 @@ test('代理结果更新请求统计和冷却状态', async (t) => {
   assert.equal(state.available, true)
   assert.equal(state.requests, 2)
   assert.equal(state.cooldownUntil, 0)
+  assert.equal(state.sticky, true)
 })
 
 test('优先非 %我的% 名称的 Key 且成功后粘滞', async (t) => {

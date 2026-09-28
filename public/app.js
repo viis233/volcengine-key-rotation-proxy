@@ -88,10 +88,31 @@ async function load() {
     $('#validCount').textContent = health.keys.valid
     $('#quotaCount').textContent = health.keys.quotaAvailable
     $('#empty').hidden = keys.length > 0
+    renderCurrent(keys)
     $('#keyList').replaceChildren(...keys.map(renderKey))
   } catch (error) {
     $('#health').classList.remove('ok'); $('#health').lastChild.textContent = '连接异常'
   }
+}
+
+function renderCurrent(keys) {
+  const current = keys.find((key) => key.sticky)
+  const nameEl = $('#currentKeyName')
+  const detailEl = $('#currentKeyDetail')
+  const statusEl = $('#currentKeyStatus')
+  if (!current) {
+    nameEl.textContent = '无'
+    detailEl.textContent = '尚无 sticky Key（尚未有成功请求）'
+    statusEl.className = 'status disabled'
+    statusEl.textContent = '未指定'
+    return
+  }
+  const [authClass, authLabel] = authStatusOf(current)
+  const quotaStatus = quotaStatusOf(current)
+  nameEl.textContent = current.name
+  detailEl.textContent = `请求 ${current.requests} 次 · 最近检测 ${formatTime(current.lastCheckedAt)}`
+  statusEl.className = `status ${current.available ? 'available' : authClass}`
+  statusEl.textContent = quotaStatus ? `${authLabel} · ${quotaStatus[1]}` : authLabel
 }
 
 function renderKey(key) {
@@ -110,8 +131,9 @@ function renderKey(key) {
   }
   const errorCode = key.lastErrorCode ? '<br><span class="key-error-code"></span>' : ''
   const quotaBadge = quotaStatus ? `<span class="status ${quotaStatus[0]}">${quotaStatus[1]}</span>` : ''
-  row.innerHTML = `<div><div class="key-name"></div><div class="key-value"></div></div><div class="status-stack"><span class="status ${authClass}">${authLabel}</span>${quotaBadge}</div><div class="key-details">${quotaDetail}${errorCode}</div><div class="key-details">${key.requests} 次请求 · ${key.failures} 次失败<br>${checkedText}</div><div class="row-actions"><button class="secondary toggle">${key.enabled ? '停用' : '启用'}</button><button class="delete">删除</button></div>`
-  row.querySelector('.key-name').textContent = key.name
+  const stickyBadge = key.sticky ? '<span class="status sticky-badge">当前使用</span>' : ''
+  row.innerHTML = `<div><div class="key-name">${stickyBadge}</div><div class="key-value"></div></div><div class="status-stack"><span class="status ${authClass}">${authLabel}</span>${quotaBadge}</div><div class="key-details">${quotaDetail}${errorCode}</div><div class="key-details">${key.requests} 次请求 · ${key.failures} 次失败<br>${checkedText}</div><div class="row-actions"><button class="secondary toggle">${key.enabled ? '停用' : '启用'}</button><button class="delete">删除</button></div>`
+  row.querySelector('.key-name').appendChild(document.createTextNode(key.name))
   row.querySelector('.key-value').textContent = key.masked
   if (key.lastErrorCode) row.querySelector('.key-error-code').textContent = key.lastErrorCode
   if (key.lastError) row.title = key.lastError

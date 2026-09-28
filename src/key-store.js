@@ -62,6 +62,7 @@ export class KeyStore {
       quotaPeriod: key.quotaPeriod,
       lastErrorCode: key.lastErrorCode,
       lastCheckedAt: key.lastCheckedAt,
+      sticky: key.id === this.state.stickyId,
       masked: key.value.length > 8 ? `${key.value.slice(0, 4)}••••${key.value.slice(-4)}` : '••••••••',
       available: key.enabled && key.authStatus === 'valid' && key.quotaStatus === 'available' && key.cooldownUntil <= now
     }))
